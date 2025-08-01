@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Tres en Raya - ¡Juega contra la Computadora!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            color: #333;
+        }
+
+        h1 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .setup-screen {
+            margin-bottom: 30px;
+        }
+
+        .setup-option {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 15px;
+            border: 3px solid #e2e8f0;
+        }
+
+        .setup-option h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .symbol-buttons, .turn-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .symbol-btn, .turn-btn {
+            padding: 15px 25px;
+            font-size: 1.5em;
+            border: 3px solid #cbd5e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .symbol-btn:hover, .turn-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .symbol-btn.selected {
+            background: #48bb78;
+            color: white;
+            border-color: #38a169;
+        }
+
+        .turn-btn.selected {
+            background: #4299e1;
+            color: white;
+            border-color: #3182ce;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.3em;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-board {
+            display: none;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 20px auto;
+            background: #2d3748;
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .cell {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 2.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell:hover:not(:disabled) {
+            background: #f0fff4;
+            transform: scale(1.05);
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .cell.x {
+            color: #e53e3e;
+        }
+
+        .cell.o {
+            color: #3182ce;
+        }
+
+        .status {
+            font-size: 1.3em;
+            margin: 20px 0;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .new-game-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .new-game-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(20);
+                opacity: 0;
+            }
+        }
+
+        .celebration {
+            font-size: 2em;
+            animation: bounce 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-10px); }
+        }
+
+        .game-info {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #2d3748;
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            .cell {
+                width: 60px;
+                height: 60px;
+                font-size: 2em;
+            }
+            
+            .symbol-buttons, .turn-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+<style type="text/css">
+.grande { font-size: 60px; }
+</style>
+<script>
+// Escribir aqui el código Javascript
+</script>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 Tres en Raya</h1>
+        
+        <div class="setup-screen" id="setupScreen">
+            <div class="setup-option">
+                <h3>🎯 Elige tu símbolo:</h3>
+                <div class="symbol-buttons">
+                    <button class="symbol-btn" data-symbol="X">❌ X</button>
+                    <button class="symbol-btn" data-symbol="O">⭕ O</button>
+                </div>
+            </div>
+            
+            <div class="setup-option">
+                <h3>🚀 ¿Quién empieza?</h3>
+                <div class="turn-buttons">
+                    <button class="turn-btn" data-turn="player">🙋‍♂️ Yo primero</button>
+                    <button class="turn-btn" data-turn="computer">🤖 La computadora</button>
+                </div>
+            </div>
+            
+            <button class="start-btn" id="startBtn" disabled="">¡Empezar a Jugar! 🎉</button>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <div class="game-info" id="gameInfo">
+                <div>Tú juegas con: <span id="playerSymbolDisplay"></span></div>
+                <div>Computadora juega con: <span id="computerSymbolDisplay"></span></div>
+            </div>
+            
+            <div class="status" id="status">¡Tu turno! 😊</div>
+            
+            <div class="board" id="board">
+                <button class="cell" data-index="0"></button>
+                <button class="cell" data-index="1"></button>
+                <button class="cell" data-index="2"></button>
+                <button class="cell" data-index="3"></button>
+                <button class="cell" data-index="4"></button>
+                <button class="cell" data-index="5"></button>
+                <button class="cell" data-index="6"></button>
+                <button class="cell" data-index="7"></button>
+                <button class="cell" data-index="8"></button>
+            </div>
+            
+            <button class="new-game-btn" id="newGameBtn">🔄 Nueva Partida</button>
+        </div>
+    </div>
+
+    <div class="fireworks" id="fireworks"></div>
+
+    <script>
+        class TicTacToe {
+            constructor() {
+                this.board = Array(9).fill('');
+                this.playerSymbol = '';
+                this.computerSymbol = '';
+                this.currentPlayer = '';
+                this.gameActive = false;
+                this.playerStarts = true;
+                
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                // Selección de símbolo
+                document.querySelectorAll('.symbol-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.symbol-btn').forEach(b => b.classList.remove('selected'));
+                        e.target.classList.add('selected');
+                        this.playerSymbol = e.target.dataset.symbol;
+                        this.computerSymbol = this.playerSymbol === 'X' ? 'O' : 'X';
+                        this.checkStartButton();
+                    });
+                });
+
+                // Selección de turno
+                document.querySelectorAll('.turn-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.turn-btn').forEach(b => b.classList.remove('selected'));
+                        e.target.classList.add('selected');
+                        this.playerStarts = e.target.dataset.turn === 'player';
+                        this.checkStartButton();
+                    });
+                });
+
+                // Botón de inicio
+                document.getElementById('startBtn').addEventListener('click', () => {
+                    this.startGame();
+                });
+
+                // Celdas del tablero
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.addEventListener('click', (e) => {
+                        this.handleCellClick(e.target);
+                    });
+                });
+
+                // Botón nueva partida
+                document.getElementById('newGameBtn').addEventListener('click', () => {
+                    this.resetToSetup();
+                });
+            }
+
+            checkStartButton() {
+                const startBtn = document.getElementById('startBtn');
+                const hasSymbol = document.querySelector('.symbol-btn.selected');
+                const hasTurn = document.querySelector('.turn-btn.selected');
+                
+                startBtn.disabled = !(hasSymbol && hasTurn);
+            }
+
+            startGame() {
+                document.getElementById('setupScreen').style.display = 'none';
+                document.getElementById('gameBoard').style.display = 'block';
+                
+                document.getElementById('playerSymbolDisplay').textContent = this.playerSymbol === 'X' ? '❌ X' : '⭕ O';
+                document.getElementById('computerSymbolDisplay').textContent = this.computerSymbol === 'X' ? '❌ X' : '⭕ O';
+                
+                this.board = Array(9).fill('');
+                this.gameActive = true;
+                this.currentPlayer = this.playerStarts ? 'player' : 'computer';
+                
+                this.updateBoard();
+                this.updateStatus();
+                
+                if (!this.playerStarts) {
+                    setTimeout(() => this.computerMove(), 500);
+                }
+            }
+
+            handleCellClick(cell) {
+                const index = parseInt(cell.dataset.index);
+                
+                if (!this.gameActive || this.board[index] !== '' || this.currentPlayer !== 'player') {
+                    return;
+                }
+                
+                this.makeMove(index, this.playerSymbol);
+                
+                if (this.gameActive) {
+                    this.currentPlayer = 'computer';
+                    this.updateStatus();
+                    setTimeout(() => this.computerMove(), 500);
+                }
+            }
+
+            makeMove(index, symbol) {
+                this.board[index] = symbol;
+                this.updateBoard();
+                
+                const winner = this.checkWinner();
+                if (winner) {
+                    this.endGame(winner);
+                } else if (this.board.every(cell => cell !== '')) {
+                    this.endGame('tie');
+                }
+            }
+
+            computerMove() {
+                if (!this.gameActive) return;
+                
+                const bestMove = this.getBestMove();
+                this.makeMove(bestMove, this.computerSymbol);
+                
+                if (this.gameActive) {
+                    this.currentPlayer = 'player';
+                    this.updateStatus();
+                }
+            }
+
+            getBestMove() {
+                // Primero, intenta ganar
+                for (let i = 0; i < 9; i++) {
+                    if (this.board[i] === '') {
+                        this.board[i] = this.computerSymbol;
+                        if (this.checkWinner() === 'computer') {
+                            this.board[i] = '';
+                            return i;
+                        }
+                        this.board[i] = '';
+                    }
+                }
+                
+                // Segundo, bloquea al jugador
+                for (let i = 0; i < 9; i++) {
+                    if (this.board[i] === '') {
+                        this.board[i] = this.playerSymbol;
+                        if (this.checkWinner() === 'player') {
+                            this.board[i] = '';
+                            return i;
+                        }
+                        this.board[i] = '';
+                    }
+                }
+                
+                // Tercero, toma el centro si está disponible
+                if (this.board[4] === '') {
+                    return 4;
+                }
+                
+                // Cuarto, toma una esquina
+                const corners = [0, 2, 6, 8];
+                const availableCorners = corners.filter(i => this.board[i] === '');
+                if (availableCorners.length > 0) {
+                    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                }
+                
+                // Finalmente, toma cualquier casilla disponible
+                const availableMoves = this.board.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+                return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            }
+
+            checkWinner() {
+                const winPatterns = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Filas
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columnas
+                    [0, 4, 8], [2, 4, 6] // Diagonales
+                ];
+                
+                for (let pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
+                        if (this.board[a] === this.playerSymbol) {
+                            return 'player';
+                        } else {
+                            return 'computer';
+                        }
+                    }
+                }
+                
+                return null;
+            }
+
+            updateBoard() {
+                document.querySelectorAll('.cell').forEach((cell, index) => {
+                    const value = this.board[index];
+                    cell.textContent = value === 'X' ? '❌' : value === 'O' ? '⭕' : '';
+                    cell.className = `cell ${value.toLowerCase()}`;
+                    cell.disabled = value !== '' || !this.gameActive;
+                });
+            }
+
+            updateStatus() {
+                const status = document.getElementById('status');
+                if (this.currentPlayer === 'player') {
+                    status.textContent = '¡Tu turno! 😊';
+                } else {
+                    status.textContent = '🤖 La computadora está pensando...';
+                }
+            }
+
+            endGame(result) {
+                this.gameActive = false;
+                const status = document.getElementById('status');
+                
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.disabled = true;
+                });
+                
+                if (result === 'player') {
+                    status.innerHTML = '<div class="celebration">🎉 ¡FELICIDADES! ¡HAS GANADO! 🎉</div>';
+                    this.createFireworks();
+                } else if (result === 'computer') {
+                    status.innerHTML = '😔 ¡Oh no! La computadora ha ganado esta vez.<br>¡No te rindas, inténtalo de nuevo! 💪';
+                } else {
+                    status.innerHTML = '🤝 ¡Empate! Ambos jugaron muy bien.<br>¡Vamos por otra partida! 🎯';
+                }
+            }
+
+            createFireworks() {
+                const fireworksContainer = document.getElementById('fireworks');
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+                
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.left = Math.random() * 100 + '%';
+                        firework.style.top = Math.random() * 100 + '%';
+                        firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        fireworksContainer.appendChild(firework);
+                        
+                        setTimeout(() => {
+                            firework.remove();
+                        }, 1000);
+                    }, i * 100);
+                }
+            }
+
+            resetToSetup() {
+                document.getElementById('gameBoard').style.display = 'none';
+                document.getElementById('setupScreen').style.display = 'block';
+                
+                // Limpiar selecciones
+                document.querySelectorAll('.symbol-btn, .turn-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                document.getElementById('startBtn').disabled = true;
+                
+                // Limpiar tablero
+                this.board = Array(9).fill('');
+                this.updateBoard();
+                
+                // Limpiar fuegos artificiales
+                document.getElementById('fireworks').innerHTML = '';
+            }
+        }
+
+        // Inicializar el juego cuando se carga la página
+        document.addEventListener('DOMContentLoaded', () => {
+            new TicTacToe();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'967429ceb0d1ec8d',t:'MTc1Mzg3MTI0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border: medium; visibility: hidden;"></iframe>
+
+
+</body></html>
